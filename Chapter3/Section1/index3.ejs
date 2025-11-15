@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.css"
+      rel="stylesheet"
+      crossorigin="anonymous"
+    />
+    <title>Index</title>
+  </head>
+
+  <body class="container">
+    <header>
+      <h1 class="display-4"><%=title %></h1>
+    </header>
+    <div role="main">
+      <p><%=content %></p>
+      <table class="table">
+        <!-- <% for(var key in data) { %>
+        <tr>
+          <th><%= key %></th>
+          <td><%= data[key] %></td>
+        </tr>
+        <% } %> -->
+        <% Object.entries(data).forEach(([key, value]) => { %>
+        <tr>
+          <th><%= key %></th>
+          <td><%= value %></td>
+        </tr>
+        <% }); %>
+      </table>
+    </div>
+  </body>
+</html>

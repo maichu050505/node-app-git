@@ -183,7 +183,7 @@ fs.readFile(filePath, "utf8", (error, data) => {
   const index_page = fs.readFileSync(filePath, "utf-8");
   ```
   ### readFileSync というメソッドの使い方： 変数 = fs.readFileSync(ファイル名, エンコーディング);
-  - readFileSync は同期処理でファイルを読み込む。（readFile は非同期処理）
+  - readFileSync は同期処理でファイルを読み込む。（readFile は非同期処理、本番では非同期の readFile を使う！）
   - ファイルの読み込みが終わるまで待ってから次に進む。なのでコールバック関数はない。
   - なぜ、時間がかかりそうな同期処理で良いのか。サーバーが実行される前だから大丈夫。サーバーが起動するのに時間がかかるだけ。
   3. レンダリングの実行
