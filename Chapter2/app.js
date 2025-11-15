@@ -2,7 +2,7 @@
 const http = require("http");
 
 // サーバーオブジェクトの作成
-var server = http.createServer((request, response) => {
+const server = http.createServer((request, response) => {
   response.end('<h1 style="color:blue;">Hello World</h1>');
 });
 

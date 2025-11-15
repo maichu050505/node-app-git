@@ -11,7 +11,7 @@ const other_page = fs.readFileSync(filePath_other, "utf-8");
 filePath_css = path.join(__dirname, "style.css");
 const style_css = fs.readFileSync(filePath_css, "utf-8");
 
-var server = http.createServer(getFromClient);
+const server = http.createServer(getFromClient);
 
 server.listen(3000);
 console.log("Server start!");
@@ -24,7 +24,7 @@ function getFromClient(request, response) {
   switch (url.pathname) {
     case "/":
       // レンダリング
-      var content = ejs.render(index_page, {
+      const content = ejs.render(index_page, {
         title: "Index",
         content: "これはテンプレートを使ったサンプルページです。",
       });
@@ -38,12 +38,12 @@ function getFromClient(request, response) {
       response.end();
       break;
     case "/other":
-      var content = ejs.render(other_page, {
+      const html = ejs.render(other_page, {
         title: "Other",
         content: "これは新しく用意したページです。",
       });
       response.writeHead(200, { "Content-Type": "text/html" });
-      response.write(content);
+      response.write(html);
       response.end();
       break;
     default:

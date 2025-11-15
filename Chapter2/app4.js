@@ -2,7 +2,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 
-var server = http.createServer(getFromClient);
+const server = http.createServer(getFromClient);
 
 server.listen(3000);
 console.log("Server start!");
