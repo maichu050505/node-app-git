@@ -1,0 +1,102 @@
+const http = require("http");
+const fs = require("fs");
+const ejs = require("ejs");
+const path = require("path");
+
+const filePath_index = path.join(__dirname, "index4.ejs");
+const index_page = fs.readFileSync(filePath_index, "utf-8");
+
+const filePath_other = path.join(__dirname, "other.ejs");
+const other_page = fs.readFileSync(filePath_other, "utf-8");
+
+const filePath_style = path.join(__dirname, "style.css");
+const style_css = fs.readFileSync(filePath_style, "utf-8");
+
+const server = http.createServer(getFromClient);
+
+server.listen(3000);
+console.log("Server start!");
+
+// 追加
+let data = { msg: "no message...." };
+
+// createServerの中身を関数化
+function getFromClient(request, response) {
+  const urlObj = new URL(request.url, `http://${request.headers.host}`);
+  switch (urlObj.pathname) {
+    case "/":
+      response_index(request, response); // 追加
+      break;
+    case "/other":
+      response_other(request, response);
+      break;
+    case "/style.css":
+      response.writeHead(200, { "Content-Type": "text/css; charset=utf-8" });
+      response.write(style_css);
+      response.end();
+      break;
+    default:
+      response.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
+      response.end("no page...");
+      break;
+  }
+}
+
+// 追加：indexのアクセス処理
+function response_index(request, response) {
+  // POSTアクセス時の処理
+  if (request.method === "POST") {
+    let body = ""; // ここに、フォーム送信されたデータが文字列として入る。
+
+    // データ受信のイベント処理
+    // 本の書き方
+    // request.on("data", (data) => {
+    //   body += data;
+    // });
+    // 推奨の書き方は、.toString()をちゃんと書く。
+    request.on("data", (data) => {
+      body += data.toString();
+    });
+
+    // データ受信終了のイベント処理
+    request.on("end", () => {
+      // 本の書き方は、
+      // data = qs.parse(body);
+      const params = new URLSearchParams(body);
+      data.msg = params.get("msg") ?? "";
+      console.log(data); // { msg: 'フォームから送信された内容' } のように表示される。例）msg=%E3%83%86%E3%82%B9%E3%83%88
+      console.log(params.get("msg")); // フォームから送信された内容だけが表示される。例）テスト
+      write_index(request, response); // index書き出し処理
+    });
+  } else {
+    write_index(request, response); // index書き出し処理
+  }
+}
+
+// indexの表示の作成
+function write_index(request, response) {
+  const msg = "これはIndexページです。伝言を表示します。";
+  let content = ejs.render(index_page, {
+    title: "Index",
+    content: msg,
+    data: data,
+    filename: filePath_index, // index.ejs のフルパスを渡す！
+  });
+  response.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+  response.write(content);
+  response.end();
+}
+
+// 追加：otherのアクセス処理
+function response_other(request, response) {
+  const msg = "これはOtherページです。";
+  let content = ejs.render(other_page, {
+    title: "Other",
+    content: msg,
+    data: data,
+    filename: filePath_other, // other.ejs のフルパスを渡す！
+  });
+  response.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+  response.write(content);
+  response.end();
+}

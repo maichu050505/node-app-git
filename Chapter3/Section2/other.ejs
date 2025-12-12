@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.css"
+      rel="stylesheet"
+      crossorigin="anonymous"
+    />
+    <title>Index</title>
+  </head>
+
+  <body class="container">
+    <header>
+      <h1 class="display-4"><%=title %></h1>
+    </header>
+    <div role="main">
+      <p><%=content %></p>
+      <% let id = 0; %>
+      <!-- 本の書き方：for...in -->
+      <!-- <%# for (const key in
+      data) { %> <%# include('data_item2', { id: ++id, key: key, val: data[key] }); %> <%# } %> -->
+      <!-- EJS v3以降の書き方 -->
+      <% for (const key of Object.keys(data)) { %> <%- include('data_item2', { id: ++id, key, val:
+      data[key], }) %> <% } %>
+    </div>
+  </body>
+</html>
