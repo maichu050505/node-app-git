@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ミニメッセージボード</title>
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+      crossorigin="anonymous"
+    />
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const form = document.querySelector("#loginForm");
+
+        form.addEventListener("submit", (e) => {
+          e.preventDefault();
+
+          const id = document.querySelector("#id_input").value.trim();
+          if (!id) return;
+
+          localStorage.setItem("id", id);
+          location.replace("/");
+        });
+      });
+    </script>
+  </head>
+
+  <body class="container">
+    <header>
+      <h1 class="display-4">メッセージボード</h1>
+    </header>
+    <div role="main">
+      <p>あなたのログインネームを入力してください。</p>
+      <form id="loginForm" method="post" action="/" accept-charset="utf-8">
+        <div class="form-group">
+          <label for="id_input">Login Name:</label>
+          <input type="text" class="form-control" id="id_input" />
+        </div>
+        <button type="submit">送信</button>
+      </form>
+    </div>
+  </body>
+</html>

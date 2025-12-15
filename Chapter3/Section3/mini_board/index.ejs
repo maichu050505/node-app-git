@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ミニメッセージボード</title>
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+      crossorigin="anonymous"
+    />
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        // ローカルストレージからIDを取得
+        const id = localStorage.getItem("id");
+        // IDがなければログイン画面へ移動
+        if (!id) {
+          location.href = "/login"; // 絶対パス
+          return;
+        }
+        // 取得したIDを画面のp#idに表示＆フォームの非表示フィールドにセット
+        document.querySelector("#id").textContent = `ID:${id}`;
+        document.querySelector("#id_input").value = id;
+      });
+    </script>
+  </head>
+
+  <body class="container">
+    <header>
+      <h1 class="display-4">メッセージボード</h1>
+    </header>
+    <div role="main">
+      <p>※メッセージは最大10個まで保管されます。</p>
+      <form method="post" action="/" accept-charset="utf-8">
+        <p id="id"></p>
+        <input type="hidden" id="id_input" name="id" value="" />
+        <div class="form-group">
+          <label for="msg">Message</label>
+          <input type="text" class="form-control" id="msg" name="msg" />
+        </div>
+        <input type="submit" class="btn btn-primary" value="送信" />
+      </form>
+      <table class="table">
+        <!-- <% for(let i in data){ %> <%- include('data_item', {val:data[i]}) %> <% } %> -->
+        <% for (const item of data) { %> <%- include('data_item', { val: item }) %> <% } %>
+      </table>
+    </div>
+  </body>
+</html>
