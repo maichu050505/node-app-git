@@ -146,3 +146,146 @@ app.listen(3000, () => {
 
 app オブジェクトの listen メソッドを使う。第一引数に、ポート番号、第二引数に、待ち受け開始後に実行されるコールバック関数を指定。
 Node.js の http.Server にあった listen と同じ働き。
+
+## Express ジェネレーターのスクリプト解説(ex-gen-app/app.js)
+
+1. 必要なモジュールをロード
+
+```js
+var createError = require("http-errors"); // HTTPエラーの対処を行うもの
+var express = require("express"); // Expressの本体。
+var path = require("path"); // ファイルパスを扱うもの。
+var cookieParser = require("cookie-parser"); // クッキーのパース（値を変換する処理）に関するもの。
+var logger = require("morgan"); // HTTPリクエストのログ出力に関するもの。
+```
+
+2. ルート用のモジュールのロード
+
+```js
+var indexRouter = require("./routes/index");
+var usersRouter = require("./routes/users");
+```
+
+- routes フォルダの中の index.js と users.js というスクリプトファイルをロードしている。
+
+3. Express オブジェクトの作成と基本設定
+
+```js
+var app = express();
+
+// view engine setup
+app.set("views", path.join(__dirname, "views"));
+app.set("view engine", "ejs");
+```
+
+- app.set は、アプリケーションで必要とする各種設定情報をセット。
+- views は、テンプレートファイルが保管されている場所を設定。
+- view engine は、テンプレートエンジンの種類を設定。
+
+4. app.use による関数組み込み
+
+```js
+app.use(logger("dev"));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+app.use(express.static(path.join(__dirname, "public")));
+```
+
+- app.use は、アプリケーションで利用する関数を設定するためのもの。アプリケーションにアクセスした際に実行される処理を組み込むためのもの。
+- ここでは require でロードした各種のモジュールの機能を組み込んでいる。これらを組み込むことで、Web ページにアクセスした際の基本的な処理が行われるようになる。
+
+5. アクセスのための app.use を作成
+
+```js
+app.use("/", indexRouter);
+app.use("/users", usersRouter);
+```
+
+- ここでは、"/"と"users"に、それぞれ indexRouter と usersRouter を割り当てている。先ほど require でロードした index.js と users.js の内容を保管している変数を、app.use で指定のアドレスに割り当てることで、そのアドレスにアクセスしたら、設定されたモジュールにある処理を呼び出すという関連付けがされる。
+
+6. その他のアクセス処理
+
+- (1): エラーコード 404 用（Not Found）のエラー処理
+
+```js
+// catch 404 and forward to error handler
+app.use(function (req, res, next) {
+  next(createError(404));
+});
+```
+
+- (2): それ以外のエラー処理
+
+```js
+// error handler
+app.use(function (err, req, res, next) {
+  // set locals, only providing error in development
+  res.locals.message = err.message;
+  res.locals.error = req.app.get("env") === "development" ? err : {};
+
+  // render the error page
+  res.status(err.status || 500);
+  res.render("error");
+});
+```
+
+- これまでの app.use で設定されたアドレス以外のところにアクセスした際に呼び出される。
+
+7. module.express の設定
+
+```js
+module.exports = app;
+```
+
+- app は express オブジェクトが入った変数。これを module というモジュール管理のオブジェクトの「exports」というプロパティに設定する。
+- exports というのは、外部からのアクセスに関するもので、こうすることで設定したオブジェクトが外部からアクセスできるようになる。
+- Express ジェネレーターのスクリプトで最後に必ずやっておくもの！
+
+## Express ジェネレーターの index.js の解説（routes/index.js）
+
+```js
+var express = require("express");
+var router = express.Router();
+```
+
+- require('express')で Express をロードした後、Router というメソッドを呼び出す。これは、Router オブジェクトを生成するもので、ルーティングに関する機能をまとめたもの。
+
+1. router.get について
+
+```js
+/* GET home page. */
+router.get("/", function (req, res, next) {
+  res.render("index", { title: "Express" });
+});
+```
+
+- router.get というメソッドで、"/"にアクセスした際の表示(res.render でレンダリングする)を行っている。
+- Express ジェネレーターを使わずに書く方法では、下記の app.get を使っていたが、これと同じもの。
+
+```js
+app.get("/", (req, res) => {
+  res.send("Welcome to Express!");
+});
+```
+
+- 使い方：router.get(アドレス, 関数);
+
+2. render によるレンダリング
+
+```js
+res.render("index", { title: "Express" });
+```
+
+- 関数内で行っているのは、request の render でレンダリングを行う作業。第一引数にテンプレートファイルの名前を書く。.ejs は不要。
+- { title: "Express" }この部分は、views/index.ejs の<%= title %>の部分で使われている変数に渡している。
+
+3. module.express の設定
+
+```js
+module.exports = router;
+```
+
+- 最後のおまじない。
+
+## Express ジェネレーターの bin/www ファイルの解説
