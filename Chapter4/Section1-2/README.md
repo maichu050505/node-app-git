@@ -192,7 +192,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 ```
 
-- app.use は、アプリケーションで利用する関数を設定するためのもの。アプリケーションにアクセスした際に実行される処理を組み込むためのもの。
+- app.use は、アプリケーションで利用する関数を設定するためのもの（ミドルウェア）。アプリケーションにアクセスした際に実行される処理を組み込むためのもの。
 - ここでは require でロードした各種のモジュールの機能を組み込んでいる。これらを組み込むことで、Web ページにアクセスした際の基本的な処理が行われるようになる。
 
 5. アクセスのための app.use を作成
@@ -289,3 +289,92 @@ module.exports = router;
 - 最後のおまじない。
 
 ## Express ジェネレーターの bin/www ファイルの解説
+
+- プログラムを実行するためのコマンドのような役割を果たしている。
+
+```js
+/**
+ * Module dependencies.
+ */
+
+var app = require("../app");
+var debug = require("debug")("ex-gen-app:server");
+var http = require("http");
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.PORT || "3000");
+app.set("port", port);
+
+/**
+ * Create HTTP server.
+ */
+
+var server = http.createServer(app);
+
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.listen(port);
+server.on("error", onError);
+server.on("listening", onListening);
+```
+
+- app.js と、ex-gen-app:server, http といったモジュールをロードしている。
+- そして、port というポート番号を示す値を設定し、createServer でサーバーを実行する。
+- 引数に app という変数が指定されている。これは createServer でサーバーを作り、app を実行するという働きをする。
+- 後は、listen で待受状態にしておき、server の on を使ってイベントの処理を設定している。ここでは、error と listening という 2 つのイベントを設定。これでエラー時と待ち受け状態の時の処理を行うようにする。
+
+## Express ジェネレーターの、app.js と routes 内のモジュールの役割分担
+
+- www は、ただサーバーを起動するためのもの。実際にサーバーが起動した後の処理は何もない。
+- app.js は、Web アプリケーション本体の設定に関するもの。実行するアプリケーションの基本的な設定などを行う。
+- 実際に特定のアドレスにアクセスした時の処理は、routes フォルダ内に用意したスクリプト（モジュール）で行う。
+
+## Express ジェネレーターで、Web ページを追加する
+
+1. テンプレートを作成する
+
+- views フォルダの中に hello.ejs を作成。
+
+2. ルーティング用のスクリプトを作成。
+
+- routes フォルダの中に、hello.js を作成。/hello にアクセスした際の処理を行うスクリプトファイル。
+
+```js
+var express = require("express");
+var router = express.Router();
+
+/* GET users listing. */
+router.get("/", function (req, res, next) {
+  const data = {
+    title: "Hello!",
+    content: "これはサンプルのコンテンツです。<br>this is sample content.",
+  };
+  res.render("hello", data);
+});
+
+module.exports = router;
+```
+
+- ここの router.get("/")の/とは、/hello 以降のアドレスになる。
+- つまり、router.get("/ok", )の場合は、/hello/ok の GET 処理となる。
+
+3. app.js の修正
+
+- app.js に hello.js をモジュールとしてロードし、アドレスへ割り当てる処理を追加する。
+
+```js
+var indexRouter = require("./routes/index");
+var usersRouter = require("./routes/users");
+var helloRouter = require("./routes/hello"); // ここを追加
+
+app.use("/", indexRouter);
+app.use("/users", usersRouter);
+app.use("/hello", helloRouter); // ここを追加
+```
+
+4. npm start で実行する。http://localhost:3000/hello にアクセスできる。
