@@ -10,7 +10,7 @@ const dbPath = path.join(__dirname, "../../../mydb.db"); // データベース�
 console.log("Using DB:", dbPath);
 const db = new sqlite3.Database(dbPath);
 
-// GETアクセスの処理
+// 一覧画面の表示
 router.get("/", (req, res) => {
   db.all("SELECT * FROM mydata", (err, rows) => {
     if (err) {
@@ -20,11 +20,13 @@ router.get("/", (req, res) => {
     res.render("hello/index", {
       title: "Hello",
       content: rows,
+      find: "", // 検索文字列用
     });
   });
 });
 
-router.get("/show", (req, res) => {
+// 詳細画面の表示
+router.get("/show", (req, res, next) => {
   const id = req.query.id; // クエリパラメータからidを取得。クエリパラメータが、?id=9の時、req.query.id = 9 になる。
   db.get("SELECT * FROM mydata WHERE id = ?", [id], (err, row) => {
     if (err) return next(err);
@@ -37,6 +39,110 @@ router.get("/show", (req, res) => {
       title: "Hello/Show",
       content: "id = " + id + " のレコード",
       mydata: row,
+    });
+  });
+});
+
+// 新規追加画面の表示
+router.get("/add", (req, res) => {
+  res.render("hello/add", { title: "Hello/Add", content: "新しいレコードを入力" });
+});
+
+// 新規追加内容の保存
+router.post("/add", (req, res, next) => {
+  const { name, mail, age } = req.body;
+  // const name = req.body.name;
+  // const mail = req.body.mail;
+  // const age = req.body.age;
+
+  db.run(
+    "INSERT INTO mydata (name, mail, age) VALUES (?, ?, ?)",
+    [name, mail, age],
+    function (err) {
+      if (err) return next(err); // エラーはExpressのエラーハンドラへ
+      res.redirect("/hello/"); // 成功したらリダイレクト
+    },
+  );
+});
+
+// 編集画面の表示
+router.get("/edit", (req, res, next) => {
+  const id = req.query.id;
+  db.get("SELECT * FROM mydata WHERE id = ?", [id], (err, row) => {
+    if (err) return next(err);
+
+    if (!row) {
+      return res.status(404).send("データが見つかりません");
+    }
+    res.render("hello/edit", {
+      title: "Hello/Edit",
+      content: "id = " + id + " のレコードを編集",
+      mydata: row,
+    });
+  });
+});
+
+// 編集内容の保存
+router.post("/edit", (req, res, next) => {
+  const { id, name, mail, age } = req.body;
+  // const id = req.body.id;
+  // const name = req.body.name;
+  // const mail = req.body.mail;
+  // const age = req.body.age;
+
+  db.run(
+    "UPDATE mydata SET name = ?, mail = ?, age = ? WHERE id = ?",
+    [name, mail, age, id],
+    (err) => {
+      if (err) {
+        return next(err);
+      }
+      res.redirect("/hello"); // 更新後、一覧画面へリダイレクト
+    },
+  );
+});
+
+// 削除画面の表示
+router.get("/delete", (req, res, next) => {
+  const id = req.query.id; // クエリパラメータからidを取得。getなのでreq.query.id
+  db.get("SELECT * FROM mydata WHERE id = ?", [id], (err, row) => {
+    if (err) return next(err);
+
+    if (!row) {
+      return res.status(404).send("データが見つかりません");
+    }
+    res.render("hello/delete", {
+      title: "Hello/Delete",
+      content: "id = " + id + " のレコードを削除",
+      mydata: row,
+    });
+  });
+});
+
+// 削除処理
+router.post("/delete", (req, res, next) => {
+  const id = req.body.id; // postなのでreq.body.id。postなのでフォームのbodyから取得。
+  db.run("DELETE FROM mydata WHERE id = ?", [id], (err) => {
+    if (err) {
+      return next(err);
+    }
+    res.redirect("/hello"); // 削除後、一覧画面へリダイレクト
+  });
+});
+
+// 検索処理（条件文をそのまま受け取る危険な実装例）
+router.get("/find", (req, res) => {
+  const find = req.query.find;
+  const q = "SELECT * FROM mydata WHERE ";
+  db.all(q + find, [], (err, rows) => {
+    if (err) {
+      return res.status(500).send(err.message);
+    }
+
+    res.render("hello/index", {
+      title: "Hello",
+      content: rows,
+      find: find,
     });
   });
 });

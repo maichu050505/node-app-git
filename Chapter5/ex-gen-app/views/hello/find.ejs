@@ -16,14 +16,6 @@
     </header>
     <div role="main">
       <a href="/hello/add">新規作成</a>
-      <form action="/hello/find" method="get">
-        <div class="form-group">
-          <label for="find">検索</label>
-          <input type="text" name="find" id="find" class="form-control" value="<%=find %>"/>
-        </div>
-        <input type="submit" value="検索" class="btn btn-secondary" />
-        <a href="/hello/" class="btn btn-outline-secondary">クリア</a>
-      </form>
       <table>
         <% for(var i in content) { %>
         <tr>
