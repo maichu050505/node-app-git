@@ -4,6 +4,9 @@ const router = express.Router();
 // 追加
 const sqlite3 = require("sqlite3");
 
+// バリデーション用
+const { check, validationResult } = require("express-validator");
+
 // データベースオブジェクトの取得
 const path = require("path");
 const dbPath = path.join(__dirname, "../../../mydb.db"); // データベースファイルのパス
@@ -45,25 +48,54 @@ router.get("/show", (req, res, next) => {
 
 // 新規追加画面の表示
 router.get("/add", (req, res) => {
-  res.render("hello/add", { title: "Hello/Add", content: "新しいレコードを入力" });
+  res.render("hello/add", {
+    title: "Hello/Add",
+    content: "新しいレコードを入力",
+    form: { name: "", mail: "", age: 0 }, // 初期値を空に設定
+  });
 });
 
 // 新規追加内容の保存
-router.post("/add", (req, res, next) => {
-  const { name, mail, age } = req.body;
-  // const name = req.body.name;
-  // const mail = req.body.mail;
-  // const age = req.body.age;
+router.post(
+  "/add",
+  [
+    check("name", "お名前は必ず入力してください。").notEmpty(),
+    check("mail", "メールアドレスは有効なメールアドレスを入力してください。").isEmail(),
+    check("age", "年齢は0以上の整数を入力してください。").isInt({ min: 0 }),
+  ],
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      // バリデーションエラーがある場合
+      let result = "<ul class='text-danger'>";
+      const ressult_arr = errors.array();
+      for (let n in ressult_arr) {
+        result += "<li>" + ressult_arr[n].msg + "</li>";
+      }
+      result += "</ul>";
+      const data = {
+        title: "Hello/Add",
+        content: result,
+        form: req.body,
+      };
+      return res.render("hello/add", data);
+    } else {
+      const { name, mail, age } = req.body;
+      // const name = req.body.name;
+      // const mail = req.body.mail;
+      // const age = req.body.age;
 
-  db.run(
-    "INSERT INTO mydata (name, mail, age) VALUES (?, ?, ?)",
-    [name, mail, age],
-    function (err) {
-      if (err) return next(err); // エラーはExpressのエラーハンドラへ
-      res.redirect("/hello/"); // 成功したらリダイレクト
-    },
-  );
-});
+      db.run(
+        "INSERT INTO mydata (name, mail, age) VALUES (?, ?, ?)",
+        [name, mail, age],
+        function (err) {
+          if (err) return next(err); // エラーはExpressのエラーハンドラへ
+          res.redirect("/hello/"); // 成功したらリダイレクト
+        },
+      );
+    }
+  },
+);
 
 // 編集画面の表示
 router.get("/edit", (req, res, next) => {
