@@ -59,18 +59,21 @@ router.get("/add", (req, res) => {
 router.post(
   "/add",
   [
-    check("name", "お名前は必ず入力してください。").notEmpty(),
-    check("mail", "メールアドレスは有効なメールアドレスを入力してください。").isEmail(),
+    check("name", "お名前は必ず入力してください。").notEmpty().escape(),
+    check("mail", "メールアドレスは有効なメールアドレスを入力してください。").isEmail().escape(),
     check("age", "年齢は0以上の整数を入力してください。").isInt({ min: 0 }),
+    check("age", "年齢はゼロ以上120以下で入力してください。").custom((value) => {
+      return value >= 0 && value <= 120;
+    }),
   ],
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       // バリデーションエラーがある場合
       let result = "<ul class='text-danger'>";
-      const ressult_arr = errors.array();
-      for (let n in ressult_arr) {
-        result += "<li>" + ressult_arr[n].msg + "</li>";
+      const result_arr = errors.array();
+      for (let n in result_arr) {
+        result += "<li>" + result_arr[n].msg + "</li>";
       }
       result += "</ul>";
       const data = {
@@ -91,10 +94,10 @@ router.post(
         function (err) {
           if (err) return next(err); // エラーはExpressのエラーハンドラへ
           res.redirect("/hello/"); // 成功したらリダイレクト
-        },
+        }
       );
     }
-  },
+  }
 );
 
 // 編集画面の表示
@@ -130,7 +133,7 @@ router.post("/edit", (req, res, next) => {
         return next(err);
       }
       res.redirect("/hello"); // 更新後、一覧画面へリダイレクト
-    },
+    }
   );
 });
 
