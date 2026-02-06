@@ -1,9 +1,7 @@
-var express = require('express');
+var express = require("express");
 var router = express.Router();
 
-/* GET users listing. */
-router.get('/', function(req, res, next) {
-  res.send('respond with a resource');
-});
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
 
 module.exports = router;
