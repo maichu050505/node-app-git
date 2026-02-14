@@ -55,6 +55,13 @@ datasource db {
 - Prisma v7 では、設定ファイル（prisma.config.\*）が必須。ただし、TypeScript は必須ではない。
 - JavaScript 版を使う場合は、prisma.config.ts を prisma.config.js と名前を変更すれば OK。
 - 実務では TypeScript 版を使うのが一般的だが、今は学習目的で JavaScript 版を使う。
+- JavaScriptを使う場合は、schima.prismaは、 "prisma-client-js"にしておく。
+```
+generator client {
+  provider = "prisma-client-js" // ここに-jsをつけておく
+  output   = "../generated/prisma"
+}
+```
 - TypeScript 版を使う場合は、`npm install --save-dev @types/node typescript dotenv`する。
 - prisma.config.\*で、下記のようにデータベースの URL が指定されている。
 
@@ -132,14 +139,21 @@ Please use Node.js >=22.5, Deno >=2.2 or Bun >=1.0 or ensure you have the `bette
 ## PrismaClient を利用する
 
 - `npm install @prisma/client`を実行する。
+- Prisma v7からは、下記のインストールも必要。（アダプタ必須になったため）
+- `npm install @prisma/adapter-better-sqlite3`を実行する。
+- `npm install better-sqlite3`を実行する。
 - routes/users.js を下記に書き換える。
 
 ```js
 var express = require("express");
 var router = express.Router();
 
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const { PrismaClient } = require("../generated/prisma");
+const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3");
+const adapter = new PrismaBetterSqlite3({
+  url: process.env.DATABASE_URL || "file:./mydb.db",
+});
+const prisma = new PrismaClient({ adapter });
 
 module.exports = router;
 ```

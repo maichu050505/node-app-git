@@ -6,6 +6,7 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
+    "@prisma/adapter-better-sqlite3": "^7.4.0",
     "@prisma/client": "^7.3.0",
     "better-sqlite3": "^12.6.2",
     "cookie-parser": "~1.4.6",
