@@ -16,20 +16,23 @@
     </header>
     <div role="main">
       <table>
-        <% for(var obj of content) { %>
         <tr>
-          <th><%= obj.id %></th>
-          <td><%= obj.name %></td>
-          <td><%= obj.mail %></td>
-          <td><%= obj.age %></td>
-          <% if (!isDetailView) { %>
-          <td><a href="/users/?id=<%= obj.id %>">詳細</a></td>
-          <% } %>
-          <td><a href="/users/edit/<%= obj.id %>">編集</a></td>
-          <td><a href="/users/delete/<%= obj.id %>">削除</a></td>
+          <th>お名前</th>
+          <td><%= user.name %></td>
         </tr>
-        <% } %>
+        <tr>
+          <th>メールアドレス</th>
+          <td><%= user.mail %></td>
+        </tr>
+        <tr>
+          <th>年齢</th>
+          <td><%= user.age %></td>
+        </tr>
       </table>
+      <form method="post" action="/users/delete">
+        <input type="hidden" name="id" value="<%= user.id %>" />
+        <input type="submit" value="削除" class="btn btn-danger" />
+      </form>
     </div>
   </body>
 </html>
