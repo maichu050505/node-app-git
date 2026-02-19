@@ -24,12 +24,33 @@ const prisma = new PrismaClient({ adapter });
 //   }
 // });
 
+// ページネーションの実装 users?page=番号のようにクエリでページ番号を指定する。
+const pagesize = 3; // 1ページに表示するレコード数
+let cursor = null; // カーソル
+
 // idが指定されていない場合は一覧画面を表示、指定されている場合は詳細画面を表示
 router.get("/", async (req, res) => {
   const id = +req.query.id;
   if (!id) {
+    const page = req.query.page ? +req.query.page : 0; // ページ番号
     try {
-      const users = await prisma.user.findMany();
+      const findManyArgs = {
+        orderBy: { id: "asc" },
+        // cursor: { id: cursor },
+        take: pagesize,
+      };
+      // 2ページ目以降は「カーソル行」を飛ばして「次から」取る
+      if (cursor != null) {
+        findManyArgs.cursor = { id: cursor };
+        findManyArgs.skip = 1; // カーソル行を飛ばして「次から」取る。cursor: { id: 3 } だけだと3~5番目を表示してしまう。
+      }
+      const users = await prisma.user.findMany(findManyArgs);
+
+      if (users.length > 0) {
+        cursor = users[users.length - 1].id; // 次のカーソル行を設定。今表示した 3 件のうち、最後のレコードの id を cursor に保存している。
+      } else {
+        cursor = null; // 終端なら先頭に戻す
+      }
       const data = {
         title: "ユーザー一覧",
         content: users,
@@ -38,8 +59,13 @@ router.get("/", async (req, res) => {
       res.render("users/index", data);
     } catch (error) {
       console.error(error);
-      res.status(500).render("error");
-      // または適切なエラーハンドリング
+      res.status(500).render("error", {
+        message: error.message || "エラーが発生しました",
+        error: {
+          status: 500,
+          stack: error.stack || "", // エラーのスタックトレース。エラーが起きた場合に、どのファイルのどの行で例外が起きたかを表示する。
+        },
+      });
     }
   } else {
     const user = await prisma.user.findUnique({
@@ -54,8 +80,8 @@ router.get("/", async (req, res) => {
       isDetailView: true, // 詳細画面を表示しているかどうかを判断するためのフラグ
     };
     res.render("users/index", data);
-    }
   }
+}
 );
 
 router.get("/find", async (req, res) => {
