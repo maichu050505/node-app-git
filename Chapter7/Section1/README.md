@@ -224,6 +224,7 @@ findMany は [] を返す。
 
 ### login.ejsを作成する。
 - views/users/login.ejsを作成する。
+- formのactionは、/users/login にする。
 ```html
 <form method="post" action="/users/login">
   <div class="form-group">
@@ -241,5 +242,217 @@ findMany は [] を返す。
 </p>
 ```
 
-### 
+### boards.jsを作成する
+- routes/boards.jsを作成する。
+#### ログイン状態かどうかチェックする関数。
+```js
+// ログインチェック関数
+function checkLogin(req, res) {
+  if (req.session.login == null) {
+    req.session.back = "/boards";
+    res.redirect("/users/login");
+    return true;
+  } else {
+    return false;
+  }
+}
+```
+- セッションからloginという値がnullかどうかを調べている。
+- users.jsで、ログイン成功時に`req.session.login = user;`のように req.session.login にユーザー情報を入れているので、nullならログインしていないということになる。その場合、ログインページにリダイレクトし、trueを返す。
+- `req.session.back = "/boards";`で、ログイン後に戻るページのアドレスを入れておく。user.jsで、ログインが成功した時に、`const back = req.session.back;`で取り出し、`res.redirect(back);`でリダイレクトしている。
 
+#### トップページにアクセスした処理
+```js
+// トップページにページ番号をつけてアクセス
+router.get("/:page", async (req, res, next) => {
+  if (checkLogin(req, res)) return;
+  const page = Number(req.params.page);
+  try {
+    const boards = await prisma.board.findMany({
+      skip: page * pnum,
+      take: pnum,
+      orderBy: [
+        { createdAt: "desc" }
+      ],
+      include: {
+        account: true,
+      },
+    });
+    const data = {
+      title: "Boards",
+      login: req.session.login,
+      content: boards,   // 本の brds に相当
+      page: page,
+    };
+    res.render("boards/index", data);
+  } catch (err) {
+    next(err); // Expressのエラーハンドラへ
+  }
+});
+```
+- まず、ログインチェック関数で、ログインしているかどうかをチェックする。trueならログインしていないので、returnでおしまい。ログインチェック関数の`res.redirect("/users/login");`でログインページにリダイレクトする。
+- `const page = Number(req.params.page);`で、/1 などのURLの末尾についたページ数を取得する。
+- そして、Boardから指定のページのレコードを取り出す。
+- `orderBy: [{ createdAt: "desc" }],`で、新しい投稿から順にソートを指定している。
+- `include: { account: true, },`この部分で、関連づけられた他のモデル（連携モデル）を読み込む。このaccountというのは、Boardモデルの項目で、ここにUserが保管できるようになっている。このincludeにより、実際にUserがaccountに代入されるようになる。
+
+#### メッセージの追加
+- フォーム送信されたメッセージをBoardに追加する処理。下記の部分で実行している。
+```js
+await prisma.board.create({
+  data: {
+    accountId: req.session.login.id,
+    message: req.body.msg,
+  },
+});
+res.redirect("/boards");
+```
+- accountIdには、req.session.login.idで、セッションに保管されているログインユーザーのUserからidを取り出し設定している。
+- messageには、req.body.messageで送信されたフォームのmsgを設定。
+- これをcreateで保存後、/boadsにリダイレクトすれば作業完了。
+
+#### ホームの表示
+```js
+// 利用者のホーム
+router.get("/home/:user/:id/:page", async (req, res, next) => {
+  if (checkLogin(req, res)) return;
+  const id = Number(req.params.id);
+  const page = Number(req.params.page);
+  try {
+    const boards = await prisma.board.findMany({
+      where: { accountId: id },
+      skip: page * pnum,
+      take: pnum,
+      orderBy: [
+        { createdAt: "desc" }
+      ],
+      include: {
+        account: true,
+      },
+    });
+    const data = {
+      title: "Boards",
+      login: req.session.login,
+      accountId: id,
+      userName: req.params.user,
+      content: boards,   // 本の brds に相当
+      page: page,
+      };     
+      res.render("boards/home", data);
+    } catch (err) {
+      next(err); // Expressのエラーハンドラへ
+    }
+  });
+```
+- まず、`const id = req.params.id;`と、`const page = req.params.page;`で、ユーザーIDとページ番号をURLから取得し、変数に代入する。
+- そして、これらのユーザーIDとページ番号を元に、Boardの該当レコードをfindManyで取り出す。
+- includeでは、accountの項目（Userモデルの1件分のオブジェクト）も合わせて取り出す。
+- schema.prismaのmodel Boardの意味は、
+1. accountId: Board側の外部キー（どのUserかはこの数値で紐づく）
+2. accout User @relation(...): このBoardは一人のUserに属するという関連の定義。
+fields: [accountId]	このモデル（Board）側のカラム。ここに「どの User か」を表す値が入る。
+references: [id]	相手モデル（User）側のカラム。User のどのフィールドを指すか。
+- この定義があるから、include: { account: true }で、そのBoardに紐づくUserを一緒に取ることができる。
+```
+model Board {
+  id Int @id @default(autoincrement())
+  message String
+  account User @relation(fields: [accountId], references: [id])
+  accountId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+```
+- 実際の返り値は、こんな感じ。
+```js
+{
+  id: 1,
+  message: "こんにちは",
+  accountId: 5,           // 紐づく User の id
+  account: {               // ← ここが「User モデルのオブジェクト」
+    id: 5,
+    name: "太郎",
+    pass: "...",
+    mail: "taro@example.com",
+    age: 20,
+    createdAt: ...,
+    updatedAt: ...
+  },
+  createdAt: ...,
+  updatedAt: ...
+}
+```
+
+### boards.jsをapp.jsに組み込む。
+```js
+const boardsRouter = require("./routes/boards");
+app.use("/boards", boardsRouter);
+```
+
+### テンプレートを作成する。
+1. index.ejs: /boardsのトップページ
+2. home.ejs: ホームページ
+3. data_item.ejs: パーシャル
+
+#### index.ejsを作成する
+- views/boads/index.ejsを作成。
+- 下記のように、投稿を送信できるformを設置。
+```html
+<form action="/boards/add" method="post">
+  <div class="row">
+    <div class="col-md-10">
+      <input type="text" name="msg" id="msg" class="form-control" />
+    </div>
+    <div class="col-2">
+      <input type="submit" value="送信" class="btn btn-primary" />
+    </div>
+  </div>
+</form>
+```
+- 投稿メッセージは、下記のように、`<%- include("data_item", { val: content[i] }) %>`で、data_item.ejsを読み込み、引数にval: content[i]を渡している。このcontentがデータベースから取得したBoardモデルの配列。つまり、valにBoardモデルを設定して、data_item.ejsを呼び出している。
+```html
+<table class="table mt-5">
+  <% for(let i in content) { %>
+  <%- include("data_item", { val: content[i] }) %>
+  <% } %>
+</table>
+```
+
+#### home.ejsを作成。
+- views/boards/home.ejsを作成する。
+- これは、特定のユーザーの投稿を一覧表示するもの。
+- メッセージの一覧部分は、contentから順にオブジェクトを取り出して、includeでdata_item.ejsを表示する。
+```html
+<table class="table mt-5">
+  <% for(let i in content) { %>
+    <%- include("data_item", { val: content[i] }) %>
+  <% } %>
+</table>
+```
+
+#### data_item.ejsを作成する。
+- views/boards/data_item.ejsを作成。
+- 渡されたBoardの内容を、tableタグのtrタグとして生成する。WordPressでループの中身をpartsに切り出すのと似ている。
+
+### ログアウト処理を作る（本には書いていない）
+- このアプリでは、
+ログイン時: req.session.login = user[0]; でセッションにユーザー情報を保存。
+ログインチェック: checkLogin で req.session.login == null かどうかで判定。
+なので、ログアウト = req.session.login を消す（セッションを破棄する） ことです。
+典型的な実装例
+routes/users.js に、ログアウト用のルートを 1 つ追加する。
+```js
+router.get("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return next(err); // エラーハンドラへ
+    }
+    // 必要ならクッキーも消す
+    // res.clearCookie("connect.sid");
+    res.redirect("/users/login"); // または "/" など好きな場所へ
+  });
+  res.redirect("/users/login");
+});
+```
+
+あとは、テンプレート側に、`<a href="/users/logout">ログアウト</a>`をつければログアウトできる。

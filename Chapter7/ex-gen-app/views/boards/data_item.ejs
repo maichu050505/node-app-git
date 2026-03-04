@@ -1,0 +1,17 @@
+<% if (val != null) { %>
+<tr class="row">
+  <th class="col-2">
+    <a class="text-dark" href="/boards/home/<%= val.account.name %>/<%= val.account.id %>/0"><%= val.account.name %></a>
+  </th>
+  <td class="col-7">
+    <%= val.message %>
+  </td>
+  <%
+    const d = new Date(val.createdAt);
+    const dstr = d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate() + " " + d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
+  %>
+  <td class="col-3">
+    <%= dstr %>
+  </td>
+</tr>
+<% } %>

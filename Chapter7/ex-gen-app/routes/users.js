@@ -199,11 +199,11 @@ router.get("/login", (req, res) => {
 
 // ログイン処理
 router.post("/login", async (req, res) => {
-  const { name, pass } = req.body;
+  const { name, password } = req.body;
   try {
     // 条件: nameとpassの両方が一致するレコードだけ取得。戻り値は、条件に合うレコードの配列。(0件なら空配列[]。)
     const user = await prisma.user.findMany({
-      where: { name, pass },
+      where: { name, pass: password},
     });
     // user が存在し、かつ最初の要素も存在する場合（= name と pass が一致する User がいる場合）
     if (user != null && user[0] != null) {
@@ -212,7 +212,7 @@ router.post("/login", async (req, res) => {
       // ログイン前のページにリダイレクトする。
       let back = req.session.back; // ログイン前のページを取得する。
       if (back == null) {
-        back = "/";
+        back = "/boards/0";
       }
       res.redirect(back);
     } else {
@@ -227,5 +227,18 @@ router.post("/login", async (req, res) => {
     res.status(500).render("error");
   }
 });
+
+// ログアウト処理
+router.get("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return next(err); // エラーハンドラへ
+    }
+    // 必要ならクッキーも消す
+    // res.clearCookie("connect.sid");
+    res.redirect("/users/login");
+  });
+});
+
 
 module.exports = router;
