@@ -211,7 +211,12 @@ router.post("/login", async (req, res) => {
       req.session.login = user[0];
       // ログイン前のページにリダイレクトする。
       let back = req.session.back; // ログイン前のページを取得する。
+      // 1. back がなければ "/" に戻す（Markdownツールなど）
       if (back == null) {
+        back = "/";
+      }
+      // 2. boards から来たときは "/boards/0" に補正
+      if (back === "/boards") {
         back = "/boards/0";
       }
       res.redirect(back);

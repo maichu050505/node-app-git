@@ -1,8 +1,7 @@
-body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
-}
-
-a {
-  color: #00B7FF;
+.table-wrapper {
+  width: 100%;
+  height: 200px;
+  overflow: auto;
+  padding: 5px;
+  border: 2px solid #a3a3a3;
 }

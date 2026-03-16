@@ -10,6 +10,7 @@ const usersRouter = require("./routes/users");
 const helloRouter = require("./routes/hello");
 const helloRouter2 = require("./routes/hello2");
 const boardsRouter = require("./routes/boards");
+const apiRouter = require("./routes/api");
 const app = express();
 
 // view engine setup
@@ -34,6 +35,7 @@ app.use("/users", usersRouter);
 app.use("/hello", helloRouter);
 app.use("/hello", helloRouter2);
 app.use("/boards", boardsRouter);
+app.use("/api", apiRouter);
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));

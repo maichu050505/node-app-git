@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Markdown管理アプリ</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    />
+    <link rel="stylesheet" href="/stylesheets/style.css" />
+    <script src="/js/main.js"></script>
+  </head>
+  <body class="container" onload="getAccount()">
+    <header>
+      <h1>Markdown管理アプリ</h1>
+    </header>
+    <div role="main">
+      <p class="h4">Welcome to <span id="accountId"></span>!</p>
+
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Title</th>
+            </tr>
+          </thead>
+          <tbody id="datacontainer">
+          </tbody>
+        </table>
+      </div>
+
+      <div>
+        <div class="form-group">
+          <label for="title">Title</label>
+          <input type="text" name="title" id="title" class="form-control" value="" />
+        </div>
+        <div class="form-group">
+          <label for="source">SOURCE</label>
+          <textarea name="source" id="source" class="form-control" rows="10" value=""></textarea>
+        </div>
+        <input id="modebtn" type="button" value="作成" class="btn btn-primary m-2" onClick="sendData()" />
+      </div>
+
+      <div class="card mt-4">
+        <div class="card-header text-center h5">
+          Preview
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="content"></div>
+      </div>
+    </div>
+  </body>
+</html>
