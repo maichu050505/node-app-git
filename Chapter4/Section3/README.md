@@ -58,6 +58,7 @@ router.get("/users/:id", (req, res) => {
 
 - Express では、Body Parser というパッケージをインストールして利用する。Express ジェネレーターでは標準で Body Parser が組み込み済み。
 - node_modules/express/lib/express.js に、下記の処理が入っている。
+- 今（Express4.16 以降）は、express.json() と express.urlencoded() が Express に含まれたので、body-parserは不要。
 
 ```js
 exports.json = bodyParser.json;
